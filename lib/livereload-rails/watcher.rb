@@ -25,6 +25,8 @@ module Livereload
       end
     end
 
-    delegate :add, to: :@observers
+    def add(observer)
+      @observers.add(observer)
+    end
   end
 end

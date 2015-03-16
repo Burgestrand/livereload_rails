@@ -10,8 +10,6 @@ module Livereload
     end
 
     def call(env)
-      binding.pry
-
       case env["PATH_INFO"]
       when "/livereload"
         if env["HTTP_UPGRADE"] == "websocket"

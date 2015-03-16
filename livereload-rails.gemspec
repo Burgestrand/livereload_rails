@@ -1,16 +1,16 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'rails/livereload/version'
+require 'livereload-rails/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "rails-livereload"
-  spec.version       = Rails::Livereload::VERSION
+  spec.name          = "livereload-rails"
+  spec.version       = Livereload::VERSION
   spec.authors       = ["Kim Burgestrand", "Elabs"]
   spec.email         = ["kim@burgestrand.se", "dev@elabs.se"]
 
   spec.summary       = %q{Easy livereloading of assets for Rails.}
-  spec.homepage      = "https://github.com/Burgestrand/rails-livereload"
+  spec.homepage      = "https://github.com/Burgestrand/livereload-rails"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "filewatcher"
   spec.add_dependency "tubesock"
   spec.add_dependency "weak_observable"
+  spec.add_dependency "railties", "~> 4.0"
 
   spec.add_development_dependency "pry"
   spec.add_development_dependency "bundler", "~> 1.8"
