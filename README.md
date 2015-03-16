@@ -3,6 +3,7 @@
 ## Installation
 
 ```ruby
+gem "puma"
 gem "rails-livereload", group: :development
 ```
 
