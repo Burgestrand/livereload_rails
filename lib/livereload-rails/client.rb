@@ -67,10 +67,6 @@ module Livereload
       @state = :idle
     end
 
-    def url(url)
-      send_data(command: "url", url: url)
-    end
-
     def reload(path, live: true)
       send_data(command: "reload", path: path, liveCSS: live)
     end
