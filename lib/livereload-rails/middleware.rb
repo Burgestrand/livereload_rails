@@ -11,7 +11,7 @@ module Livereload
       assets.configure do |environment|
         @watcher = Watcher.new(environment.paths) do |path, event|
           asset = environment.find_asset(path, bundle: false)
-          @clients.notify(asset.digest_path)
+          @clients.notify("#{assets.prefix}/#{asset.digest_path}")
         end
 
         @watcher_thread = Thread.new do
