@@ -6,6 +6,8 @@
 gem "rails-livereload", group: :development
 ```
 
+That's it. Your CSS now livereloads.
+
 ## Usage
 
 TODO: Write usage instructions here
