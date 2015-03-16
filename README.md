@@ -4,7 +4,7 @@
 
 ```ruby
 gem "puma"
-gem "rails-livereload", group: :development
+gem "livereload-rails", group: :development
 ```
 
 That's it. Your CSS now livereloads.
