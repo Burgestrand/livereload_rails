@@ -1,5 +1,7 @@
+require "tubesock"
+
 module Livereload
-  class Connection
+  class Client
     FSM = {
       opened: { "hello" => :on_hello },
       idle:   { "info" => nil },
@@ -7,17 +9,27 @@ module Livereload
     }
 
     class << self
-      def to_proc
-        method(:new).to_proc
+      def listen(env, &block)
+        client = new(env, &block)
+        client.listen
+        client
       end
     end
 
-    def initialize(connection)
+    def initialize(env)
       @state = :initial
 
-      @connection = connection
-      @connection.onopen { @state = :opened }
-      @connection.onclose { close }
+      @connection = Tubesock.hijack(env)
+      @connection.onopen do
+        yield self, :open
+        @state = :opened
+      end
+
+      @connection.onclose do
+        if close and block_given?
+          yield self, :close
+        end
+      end
 
       @connection.onmessage do |data|
         begin
@@ -39,12 +51,11 @@ module Livereload
       end
     end
 
-    def files_changed(asset, event)
-      send_reload(asset.digest_path)
+    def listen
+      @listen_thread = @connection.listen
     end
 
     def on_hello(frame)
-      @state = :idle
       send_data({
         command: "hello",
         protocols: [
@@ -52,25 +63,30 @@ module Livereload
         ],
         serverName: "Elabs' Livereload",
       })
+
+      @state = :idle
     end
 
-    def send_url(url)
+    def url(url)
       send_data(command: "url", url: url)
     end
 
-    def send_reload(path, live: true)
+    def reload(path, live: true)
       send_data(command: "reload", path: path, liveCSS: live)
     end
 
-    def send_alert(message)
+    def alert(message)
       send_data(command: "alert", message: message)
     end
 
     def close(reason = nil)
-      unless @state == :closed
+      if @state != :closed
         @state = :closed
-        send_alert(reason) if reason
+        alert(reason) if reason
         @connection.close
+        true
+      else
+        false
       end
     end
 

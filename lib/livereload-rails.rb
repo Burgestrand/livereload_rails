@@ -1,8 +1,10 @@
+require "pry"
+
 require "livereload-rails/version"
 require "livereload-rails/watcher"
-require "livereload-rails/connection"
+require "livereload-rails/client"
 require "livereload-rails/middleware"
-require "livereload-rails/railtie" if defined?(Rails)
+require "livereload-rails/engine"
 
 module Livereload
 end
