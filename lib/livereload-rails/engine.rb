@@ -1,3 +1,4 @@
+require "livereload-rails"
 require "rails/engine"
 require "rack-livereload"
 
