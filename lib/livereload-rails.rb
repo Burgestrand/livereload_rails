@@ -7,4 +7,5 @@ require "livereload-rails/middleware"
 require "livereload-rails/engine" if defined?(Rails)
 
 module Livereload
+  class Error < StandardError; end
 end
