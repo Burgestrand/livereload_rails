@@ -4,6 +4,7 @@ require "nio"
 module Livereload
   # A non-blocking connection.
   class Stream
+    READ_CHUNK = 1024 * 10
     EMPTY = "".freeze
 
     # stream = Stream.new do |input|
@@ -37,8 +38,13 @@ module Livereload
       @selector.wakeup
     end
 
+    # Close the connection immediately.
+    def close
+      @io.close unless @io.closed?
+    end
+
     # Continously stream data to/from the underlying IO.
-    def stream
+    def loop
       register(:rw) # w in case we have any writes pending.
 
       while @selector.registered?(@io)
@@ -81,7 +87,7 @@ module Livereload
         begin
           # Read as much data as possible.
           until @io.closed?
-            @io.read_nonblock(1024 * 10, @input_buffer)
+            @io.read_nonblock(READ_CHUNK, @input_buffer)
             @read_handler[@input_buffer]
           end
         rescue IO::WaitReadable
