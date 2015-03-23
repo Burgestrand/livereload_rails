@@ -7,9 +7,11 @@ module Livereload
     READ_CHUNK = 1024 * 10
     EMPTY = "".freeze
 
-    # stream = Stream.new do |input|
-    #   # handle input
-    # end
+    # @example
+    #   stream = Stream.new(io) do |input|
+    #     # handle input
+    #   end
+    #   stream.loop
     #
     # @param [#read_nonblock, #write_nonblock] io
     #
