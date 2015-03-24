@@ -55,8 +55,6 @@ module Livereload
           monitor.value.call(monitor)
         end
       end
-    rescue EOFError
-      # Swallowed. Stream is closing.
     end
 
     private
@@ -112,10 +110,12 @@ module Livereload
       if next_interests != monitor.interests
         register(next_interests)
       end
+    rescue EOFError, IOError, Errno::EPIPE, Errno::ECONNRESET, Errno::EPROTOTYPE
+      # Swallow errors.
+      monitor.close
     ensure
-      if $! or @io.closed?
-        @selector.deregister(@io)
-      end
+      # Other errors bubble.
+      monitor.close if $!
     end
   end
 end
