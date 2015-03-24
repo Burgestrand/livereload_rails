@@ -17,7 +17,7 @@ module Livereload
     #
     # @yield [input] whenever there is input to be consumed.
     # @yieldparam input [String] streaming input data.
-    def initialize(io, selector = NIO::Selector.new)
+    def initialize(io, selector: NIO::Selector.new)
       @io = io
       @selector = selector
 
@@ -61,9 +61,12 @@ module Livereload
 
     def register(interests)
       @selector.deregister(@io)
-      monitor = @selector.register(@io, interests)
-      monitor.value = @update_handler
-      monitor
+
+      unless @io.closed?
+        monitor = @selector.register(@io, interests)
+        monitor.value = @update_handler
+        monitor
+      end
     end
 
     # @note this is always the same object, but it might be refilled with data from the output queue.
@@ -107,7 +110,9 @@ module Livereload
         next_interests = :rw
       end
 
-      if next_interests != monitor.interests
+      if @io.closed?
+        monitor.close
+      elsif next_interests != monitor.interests
         register(next_interests)
       end
     rescue EOFError, IOError, Errno::EPIPE, Errno::ECONNRESET, Errno::EPROTOTYPE

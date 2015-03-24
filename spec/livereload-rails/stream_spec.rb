@@ -5,9 +5,6 @@ describe Livereload::Stream do
   let!(:local)  { TCPSocket.new("localhost", server.addr(true)[1]) }
   let!(:remote) { server.accept }
 
-  let(:append) { proc { |data| received << data.dup } }
-  let(:fail) { proc { raise "This should not be reached" } }
-
   it "can stream from/to an IO" do
     thread = Thread.new(local) do |io|
       received = []
@@ -23,11 +20,11 @@ describe Livereload::Stream do
     end
 
     sent = []
-    sent << remote.readpartial(18)
+    sent << remote.read(18)
     remote.write("Hello stream!")
-    sent << remote.readpartial(13)
+    sent << remote.read(13)
     remote.write("What up?!")
-    sent << remote.readpartial(9)
+    sent << remote.read(9)
     remote.close
 
     received = thread.value
@@ -35,67 +32,126 @@ describe Livereload::Stream do
     expect(sent).to eq(["Hi this is stream!", "HELLO STREAM!", "WHAT UP?!"])
   end
 
-  context "exits gracefully when IO is closed remotely" do
+  context "exits gracefully" do
     let(:received) { "" }
+    let(:append) { proc { |data| received << data.dup } }
+    let(:fail) { proc { raise "This should not be reached" } }
 
-    specify "before looping" do
-      remote.close
+    def threaded_wait(stream)
+      thread = Thread.new do
+        stream.write "OK"
+        stream.loop
+      end
 
-      stream = Livereload::Stream.new(local, &fail)
-      stream.loop
-
-      expect(received).to be_empty
+      remote.read(2)
+      Thread.pass until thread.status == "sleep"
+      thread
     end
 
-    specify "during reading" do
-      remote.write "This is cool"
+    context "when IO is closed remotely" do
+      specify "before looping" do
+        remote.close
+        stream = Livereload::Stream.new(local, &fail)
+        stream.loop
+      end
 
-      io = FakeIO.new(local, read_buffer: 8)
-      io.on(:read_nonblock) { remote.close unless remote.closed? }
+      specify "during reading" do
+        remote.write "This is cool"
 
-      stream = Livereload::Stream.new(io, &append)
-      stream.loop
+        io = FakeIO.new(local, read_buffer: 8)
+        io.on(:read_nonblock) { remote.close unless remote.closed? }
 
-      expect(received).to eq "This is cool"
+        stream = Livereload::Stream.new(io, &append)
+        stream.loop
+
+        expect(received).to eq "This is cool"
+      end
+
+      specify "during writing" do
+        data = ""
+        io = FakeIO.new(local, write_buffer: 8)
+        io.on(:write_nonblock) { data << remote.readpartial(100) }
+        io.on(:write_nonblock) { remote.close unless remote.closed? }
+
+        stream = Livereload::Stream.new(io, &fail)
+        stream.write "This is cool."
+        stream.loop
+
+        expect(data).to eq("This is ")
+      end
+
+      specify "after looping" do
+        stream = Livereload::Stream.new(local, &append)
+        thread = threaded_wait(stream)
+
+        remote.close
+        thread.value
+      end
     end
 
-    specify "during writing" do
-      data = ""
-      io = FakeIO.new(local, write_buffer: 4)
-      io.on(:write_nonblock) { data << remote.readpartial(100) unless remote.closed? }
-      io.on(:write_nonblock) { remote.close unless remote.closed? }
+    context "when IO is closed locally" do
+      specify "before looping" do
+        local.close
+        stream = Livereload::Stream.new(local, &fail)
+        stream.loop
+      end
 
-      stream = Livereload::Stream.new(io, &fail)
-      stream.write "This is cool."
-      stream.loop
+      specify "during reading" do
+        remote.write "This is cool"
 
-      expect(data).to eq("This")
-    end
+        io = FakeIO.new(local, read_buffer: 8)
+        io.on(:read_nonblock) { local.close unless local.closed? }
 
-    specify "after looping" do
-      count = 0
+        stream = Livereload::Stream.new(io, &append)
+        stream.loop
 
-      io = FakeIO.new(local)
-      io.on(:to_io) { remote.close }
+        expect(received).to eq "This is "
+      end
 
-      remote.write "This is cool"
+      specify "during writing" do
+        data = ""
+        io = FakeIO.new(local, write_buffer: 8)
+        io.on(:write_nonblock) { data << remote.readpartial(100) }
+        io.on(:write_nonblock) { local.close unless local.closed? }
 
-      stream = Livereload::Stream.new(io, &append)
-      stream.loop
+        stream = Livereload::Stream.new(io, &fail)
+        stream.write "This is cool."
+        stream.loop
 
-      expect(received).to eq("This is cool")
+        expect(data).to eq("This is ")
+      end
+
+      specify "after looping" do
+        stream = Livereload::Stream.new(local, &append)
+        thread = threaded_wait(stream)
+
+        local.close
+        thread.value
+      end
     end
   end
 
-  context "exits gracefully when IO is closed locally" do
-    specify "before looping"
-    specify "during reading"
-    specify "during writing"
-    specify "after looping"
+  context "exits catastrophically and deregisters from the selector" do
+    let(:error) { StandardError.new("CRASH!") }
+    let(:selector) { NIO::Selector.new }
+
+    specify "if reading crashes" do
+      remote.write "This is cool."
+
+      stream = Livereload::Stream.new(local, selector: selector) { raise error }
+
+      expect { stream.loop }.to raise_error(error)
+      expect(selector.registered?(local)).to eq(false)
+    end
+
+    specify "if writing crashes" do
+      expect(local).to receive(:write_nonblock).and_raise(error)
+
+      stream = Livereload::Stream.new(local, selector: selector) { |data| raise "data: #{data} received in error" }
+      stream.write "Outgoing data."
+
+      expect { stream.loop }.to raise_error(error)
+      expect(selector.registered?(local)).to eq(false)
+    end
   end
-
-  it "deregisters from the selector if reading crashes"
-  it "deregisters from the selector if writing crashes"
-
-  it "can utilize an external selector"
 end
