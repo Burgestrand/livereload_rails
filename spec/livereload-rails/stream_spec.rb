@@ -53,7 +53,16 @@ describe Livereload::Stream, timeout: 1 do
     expect(sent).to eq(["Hi this is stream!", "HELLO STREAM!", "WHAT UP?!"])
   end
 
-  it "can initiate reading from an idle state"
+  it "can initiate reading from an idle state" do
+    stream = Livereload::Stream.new(local, &append)
+    thread = threaded_wait(stream)
+
+    remote.write "Wakeup!"
+    remote.close
+    thread.join
+
+    expect(received).to eq "Wakeup!"
+  end
 
   it "can initiate writing from an idle state" do
     stream = Livereload::Stream.new(local, &fail)
