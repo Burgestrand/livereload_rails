@@ -1,6 +1,6 @@
 require "socket"
 
-describe Livereload::Stream do
+describe Livereload::Stream, timeout: 1 do
   let!(:server)  { TCPServer.new("localhost", 0) }
   let!(:local)  { TCPSocket.new("localhost", server.addr(true)[1]) }
   let!(:remote) { server.accept }
