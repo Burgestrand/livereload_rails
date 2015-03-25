@@ -5,6 +5,27 @@ describe Livereload::Stream, timeout: 1 do
   let!(:local)  { TCPSocket.new("localhost", server.addr(true)[1]) }
   let!(:remote) { server.accept }
 
+  let(:received) { "" }
+  let(:append) { proc { |data| received << data.dup } }
+  let(:fail) { proc { raise "This should not be reached" } }
+
+  def threaded_wait(stream)
+    thread = Thread.new do
+      stream.write "OK"
+      stream.loop
+    end
+
+    remote.read(2)
+    Thread.pass until thread.status == "sleep"
+    thread
+  end
+
+  after do |example|
+    remote.close unless remote.closed?
+    local.close unless local.closed?
+    server.close unless server.closed?
+  end
+
   it "can stream from/to an IO" do
     thread = Thread.new(local) do |io|
       received = []
@@ -32,26 +53,22 @@ describe Livereload::Stream, timeout: 1 do
     expect(sent).to eq(["Hi this is stream!", "HELLO STREAM!", "WHAT UP?!"])
   end
 
+  it "can initiate reading from an idle state"
+
+  it "can initiate writing from an idle state" do
+    stream = Livereload::Stream.new(local, &fail)
+    thread = threaded_wait(stream)
+
+    stream.write "No longer idle."
+
+    expect(remote.read(15)).to eq "No longer idle."
+  end
+
   context "exits gracefully" do
-    let(:received) { "" }
-    let(:append) { proc { |data| received << data.dup } }
-    let(:fail) { proc { raise "This should not be reached" } }
-
-    def threaded_wait(stream)
-      thread = Thread.new do
-        stream.write "OK"
-        stream.loop
-      end
-
-      remote.read(2)
-      Thread.pass until thread.status == "sleep"
-      thread
-    end
-
     context "when IO is closed remotely" do
       specify "before looping" do
-        remote.close
         stream = Livereload::Stream.new(local, &fail)
+        remote.close
         stream.loop
       end
 
@@ -91,8 +108,8 @@ describe Livereload::Stream, timeout: 1 do
 
     context "when IO is closed locally" do
       specify "before looping" do
-        local.close
         stream = Livereload::Stream.new(local, &fail)
+        local.close
         stream.loop
       end
 
@@ -138,19 +155,19 @@ describe Livereload::Stream, timeout: 1 do
     specify "if reading crashes" do
       remote.write "This is cool."
 
-      stream = Livereload::Stream.new(local, selector: selector) { raise error }
+      stream = Livereload::Stream.new(local) { raise error }
 
-      expect { stream.loop }.to raise_error(error)
+      expect { stream.loop(selector) }.to raise_error(error)
       expect(selector.registered?(local)).to eq(false)
     end
 
     specify "if writing crashes" do
       expect(local).to receive(:write_nonblock).and_raise(error)
 
-      stream = Livereload::Stream.new(local, selector: selector) { |data| raise "data: #{data} received in error" }
+      stream = Livereload::Stream.new(local) { |data| raise "data: #{data} received in error" }
       stream.write "Outgoing data."
 
-      expect { stream.loop }.to raise_error(error)
+      expect { stream.loop(selector) }.to raise_error(error)
       expect(selector.registered?(local)).to eq(false)
     end
   end
