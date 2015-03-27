@@ -73,6 +73,14 @@ describe Livereload::Stream, timeout: 1 do
     expect(remote.read(15)).to eq "No longer idle."
   end
 
+  it "can read from the start if there is data in the pipe" do
+    remote.write "Data in the pipes!"
+    stream = Livereload::Stream.new(local) { |data| received << data; stream.close }
+    stream.loop
+
+    expect(received).to eq "Data in the pipes!"
+  end
+
   context "exits gracefully" do
     context "when IO is closed remotely" do
       specify "before looping" do
