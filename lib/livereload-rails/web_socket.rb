@@ -67,6 +67,8 @@ module Livereload
     # @note If an event handler raises an error, handlers after it will not run.
     # @param [Symbol] event (one of :open, :close, :message)
     def on(event, &handler)
+      raise ArgumentError, "no event named #{event.inspect}" unless @handlers.has_key?(event)
+
       @handlers[event].add(handler)
       handler
     end

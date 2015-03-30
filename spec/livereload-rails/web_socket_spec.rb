@@ -170,8 +170,10 @@ describe Livereload::WebSocket, timeout: 1 do
     end
 
     describe "#on" do
-      it "registers an event handler"
-      it "raises an error if the event does not exist"
+      it "raises an error if the event does not exist" do
+        websocket = klass.new(env, &handler)
+        expect { websocket.on(:what) }.to raise_error(ArgumentError, /what/)
+      end
     end
   end
 
