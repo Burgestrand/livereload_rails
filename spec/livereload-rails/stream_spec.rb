@@ -1,13 +1,13 @@
 require "socket"
 
 describe Livereload::Stream, timeout: 1 do
-  let!(:server)  { TCPServer.new("localhost", 0) }
-  let!(:local)  { TCPSocket.new("localhost", server.addr(true)[1]) }
-  let!(:remote) { server.accept }
+  let(:server) { TCPServer.new("127.0.0.1", 0) }
+  let(:local)  { TCPSocket.new("127.0.0.1", server.addr(true)[1]) }
+  let(:remote) { server.accept }
 
   let(:received) { "" }
-  let(:append) { proc { |data| received << data.dup } }
-  let(:fail) { proc { raise "This should not be reached" } }
+  let(:append)   { proc { |data| received << data.dup } }
+  let(:fail)     { proc { raise "This should not be reached" } }
 
   def threaded_wait(stream)
     thread = Thread.new do
@@ -20,11 +20,8 @@ describe Livereload::Stream, timeout: 1 do
     thread
   end
 
-  after do |example|
-    remote.close unless remote.closed?
-    local.close unless local.closed?
-    server.close unless server.closed?
-  end
+  # Order is significant.
+  before { local and remote }
 
   it "can stream from/to an IO" do
     thread = Thread.new(local) do |io|
