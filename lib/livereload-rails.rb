@@ -1,5 +1,3 @@
-require "pry"
-
 require "livereload-rails/version"
 require "livereload-rails/watcher"
 require "livereload-rails/stream"

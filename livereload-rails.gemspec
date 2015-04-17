@@ -18,11 +18,12 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
+  spec.add_runtime_dependency "websocket"
   spec.add_runtime_dependency "filewatcher"
-  spec.add_runtime_dependency "tubesock"
-  spec.add_runtime_dependency "weak_observable"
   spec.add_runtime_dependency "websocket"
   spec.add_runtime_dependency "nio4r"
+  spec.add_runtime_dependency "puma"
+  spec.add_runtime_dependency "rack-livereload"
   spec.add_runtime_dependency "railties", "~> 4.0"
   spec.add_runtime_dependency "rack-livereload"
 
