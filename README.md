@@ -30,10 +30,11 @@ Livereload::Rails consists of the following parts:
 - [Middleware](./lib/livereload-rails/middleware.rb) - rack middleware to accept websocket connections.
 - [Railtie](./lib/livereload-rails/railtie.rb) - rails engine to automatically hook rails up with livereload.
 
-## Contributing
+### Contributing
 
-1. Fork it ( https://github.com/[my-github-username]/rails-livereload/fork )
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
+Contributions are very welcome! Follow these steps:
+
+1. [Fork the code](https://github.com/Burgestrand/livereload-rails/fork): https://help.github.com/articles/fork-a-repo/
+2. Create a new pull request with your changes: https://help.github.com/articles/using-pull-requests/
+
+It's perfectly fine to create a pull request with your code and continue a discussion from your changes from there.
