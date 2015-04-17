@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+  <body>
+    <script>
+      var ws = new WebSocket("ws://localhost:5000/");
+      ws.addEventListener("open", function() {
+        console.log("open!");
+      });
+      ws.addEventListener("close", function() {
+        console.log("close!");
+      });
+      ws.addEventListener("error", function(error) {
+        console.error("error!", error);
+      });
+      ws.addEventListener("message", function(message) {
+        console.log("message!", message);
+      });
+
+      console.log("Done!");
+
+      window.ws = ws;
+    </script>
+  </body>
+</html>

@@ -1,58 +1,30 @@
-require "tubesock"
-
 module Livereload
   class Client
     FSM = {
+      initial: {},
       opened: { "hello" => :on_hello },
       idle:   { "info" => nil },
       closed: {},
     }
 
-    class << self
-      def listen(env, &block)
-        client = new(env, &block)
-        client.listen
-        client
-      end
-    end
-
-    def initialize(env)
+    def initialize(ws)
       @state = :initial
 
-      @connection = Tubesock.hijack(env)
-      @connection.onopen do
-        yield self, :open
-        @state = :opened
-      end
+      @connection = ws
+      @connection.on(:open) { @state = :opened }
+      @connection.on(:close) { close }
+      @connection.on(:message) do |frame|
+        data = JSON.parse(frame.data)
+        command = data["command"]
 
-      @connection.onclose do
-        if close and block_given?
-          yield self, :close
-        end
-      end
-
-      @connection.onmessage do |data|
-        begin
-          data = JSON.parse(data)
-          command = data["command"]
-
-          if FSM[@state].has_key?(command)
-            if handler = FSM[@state][command]
-              public_send(handler, data)
-            end
-          else
-            close "Unexpected #{data["command"].inspect} in #{@state}."
+        if FSM[@state].has_key?(command)
+          if handler = FSM[@state][command]
+            public_send(handler, data)
           end
-        rescue => error
-          # See: https://github.com/ngauthier/tubesock/issues/44
-          close error.inspect
-          raise
+        else
+          raise "Unexpected #{data["command"].inspect} in #{@state}."
         end
       end
-    end
-
-    def listen
-      @listen_thread = @connection.listen
     end
 
     def on_hello(frame)
@@ -89,7 +61,7 @@ module Livereload
     private
 
     def send_data(object)
-      @connection.send_data JSON.generate(object)
+      @connection.write JSON.generate(object)
     end
   end
 end
