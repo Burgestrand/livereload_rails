@@ -20,7 +20,7 @@ If you wish to contribute to this gem, here are some notes I hope will help you:
 - `bin/console`: run to start an interactive console to experiment with the code.
 - `rake`: run the automated test suite.
 
-## Implementation Notes
+### Implementation Notes
 
 Livereload::Rails consists of the following parts:
 
