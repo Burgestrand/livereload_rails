@@ -1,18 +1,22 @@
 require "monitor"
-require "weak_observable"
+require "set"
 require "filewatcher"
 
 module Livereload
   class Middleware
+    ASYNC_RESPONSE = [-1, {}, []]
+
     def initialize(app, assets: )
       @app = app
-      @clients = WeakObservable.new
+      @clients = Set.new
+      @clients.extend(MonitorMixin)
 
       assets.digest = false
       assets.configure do |environment|
         @watcher = Watcher.new(environment.paths) do |path, event|
           asset = environment.find_asset(path, bundle: false)
-          @clients.notify("#{assets.prefix}/#{asset.logical_path}")
+          client_path = "#{assets.prefix}/#{asset.logical_path}"
+          @clients.each { |client| client.reload(client_path) }
         end
 
         @watcher_thread = Thread.new do
@@ -23,26 +27,27 @@ module Livereload
     end
 
     def call(env)
-      if env["HTTP_UPGRADE"] == "websocket" && env["PATH_INFO"] == "/livereload"
-        livereload(env)
+      if env["PATH_INFO"] == "/livereload"
+        websocket = Livereload::WebSocket.from_rack(env) do |ws|
+          client = Livereload::Client.new(ws)
+
+          ws.on(:open) do
+            @clients.synchronize { @clients.add(client) }
+          end
+
+          ws.on(:close) do
+            @clients.synchronize { @clients.delete(client) }
+          end
+        end
+
+        if websocket
+          ASYNC_RESPONSE
+        else
+          @app.call(env)
+        end
       else
         @app.call(env)
       end
-    end
-
-    def livereload(env)
-      Livereload::Client.listen(env) do |client, event|
-        puts "Client event: #{event}"
-
-        case event
-        when :open
-          @clients.add(client, :reload)
-        when :close
-          @clients.delete(client)
-        end
-      end
-
-      [-1, {}, []]
     end
   end
 end

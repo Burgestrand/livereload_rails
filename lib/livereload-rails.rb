@@ -4,7 +4,7 @@ require "livereload-rails/stream"
 require "livereload-rails/web_socket"
 require "livereload-rails/client"
 require "livereload-rails/middleware"
-require "livereload-rails/engine" if defined?(Rails)
+require "livereload-rails/railtie" if defined?(Rails)
 
 module Livereload
   class Error < StandardError; end
