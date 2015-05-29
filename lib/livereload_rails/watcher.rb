@@ -30,7 +30,7 @@ module LivereloadRails
     end
 
     def translate(path)
-      @matchers.each do |name, matcher|
+      @matchers.find do |name, matcher|
         if value = matcher.call(path)
           return value
         end
