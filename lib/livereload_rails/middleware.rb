@@ -6,7 +6,7 @@ module LivereloadRails
   class Middleware
     ASYNC_RESPONSE = [-1, {}, []]
 
-    def initialize(app, assets: )
+    def initialize(app, assets: , matchers: LivereloadRails.matchers)
       @app = app
       @clients = Set.new
       @clients.extend(MonitorMixin)
@@ -14,9 +14,10 @@ module LivereloadRails
       assets.digest = false
       assets.configure do |environment|
         @watcher = Watcher.new(environment.paths) do |path, event|
-          asset = environment.find_asset(path, bundle: false)
-          client_path = "#{assets.prefix}/#{asset.logical_path}"
-          @clients.each { |client| client.reload(client_path) }
+          if filename = matchers.translate(path)
+            client_path = "#{assets.prefix}/#{filename}"
+            @clients.each { |client| client.reload(client_path) }
+          end
         end
 
         @watcher_thread = Thread.new do
