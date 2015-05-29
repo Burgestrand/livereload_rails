@@ -1,6 +1,7 @@
 module LivereloadRails
   class Watcher
     def initialize(paths, &update)
+      LivereloadRails.logger.debug "Watching #{paths} for changes."
       @watcher = FileWatcher.new(paths)
       @update = update
     end

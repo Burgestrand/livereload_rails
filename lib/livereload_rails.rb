@@ -1,3 +1,4 @@
+require "logger"
 require "livereload_rails/version"
 require "livereload_rails/matchers"
 require "livereload_rails/watcher"
@@ -12,9 +13,11 @@ module LivereloadRails
   class HijackingNotSupported < Error; end
 
   @matchers = Matchers.new
+  @logger = Logger.new($stderr)
 
   class << self
     attr_reader :matchers
+    attr_reader :logger
 
     def configure
       yield self
@@ -30,4 +33,6 @@ LivereloadRails.configure do |config|
   config.matchers.append :js do |file|
     "everything.js" if file["javascripts"]
   end
+
+  config.logger.level = Logger::INFO
 end

@@ -17,6 +17,10 @@ module LivereloadRails
           if filename = matchers.translate(path)
             client_path = "#{assets.prefix}/#{filename}"
             @clients.each { |client| client.reload(client_path) }
+
+            LivereloadRails.logger.debug "#{path} -> #{filename}: #{@clients.count} clients updated."
+          else
+            LivereloadRails.logger.debug "#{path} -> no match."
           end
         end
 
