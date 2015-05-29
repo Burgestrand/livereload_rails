@@ -12,7 +12,7 @@ module LivereloadRails
       @clients.extend(MonitorMixin)
 
       assets.configure do |environment|
-        @watcher = Watcher.new(environment.paths, matchers: matchers) do |file|
+        @watcher = Watcher.new(LivereloadRails.paths.call(environment.paths), matchers: matchers) do |file|
           client_path = "#{assets.prefix}/#{file}"
           clients = @clients.synchronize { @clients.dup }
 

@@ -12,11 +12,13 @@ module LivereloadRails
   class HijackingNotSupported < Error; end
 
   @matchers = {}
-  @logger = Logger.new($stderr)
+  @logger = Logger.new(File::NULL)
+  @paths = lambda { |paths| paths }
 
   class << self
-    attr_reader :matchers
-    attr_reader :logger
+    attr_accessor :matchers
+    attr_accessor :logger
+    attr_accessor :paths
 
     def configure
       yield self
@@ -25,13 +27,22 @@ module LivereloadRails
 end
 
 LivereloadRails.configure do |config|
-  config.matchers[:css] = lambda do |file|
-    "everything.css" if file["stylesheets"]
+  config.matchers[:stylesheets] = lambda do |file|
+    "everything.css" if file["assets/stylesheets/"]
   end
 
-  config.matchers[:js] = lambda do |file|
-    "everything.js" if file["javascripts"]
+  config.matchers[:assets] = lambda do |file|
+    "everything#{File.extname(file)}" if file["assets/"]
   end
 
+  config.matchers[:views] = lambda do |file|
+    "everything.html" if file["views/"]
+  end
+
+  config.paths = lambda do |paths|
+    [File.join(Dir.pwd, "app/views")].concat(paths)
+  end
+
+  config.logger = Logger.new($stderr)
   config.logger.level = Logger::INFO
 end
