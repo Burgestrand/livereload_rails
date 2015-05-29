@@ -9,16 +9,23 @@ module LivereloadRails
 
     def run(timeout = 0.2)
       @watcher.watch(timeout) do |path, event|
-        if filename = translate(path)
-          if filename.empty?
-            LivereloadRails.logger.debug "#{path} -> ignored."
-          else
-            LivereloadRails.logger.debug "#{path} -> #{filename}."
-            @update[filename]
-          end
-        else
-          LivereloadRails.logger.debug "#{path} -> no match."
+        unless FileTest.file?(path)
+          LivereloadRails.logger.debug "#{path} -> not a file."
+          next
         end
+
+        unless filename = translate(path)
+          LivereloadRails.logger.debug "#{path} -> no match."
+          next
+        end
+
+        if filename.empty?
+          LivereloadRails.logger.debug "#{path} -> ignored."
+          next
+        end
+
+        LivereloadRails.logger.debug "#{path} -> #{filename}."
+        @update[filename]
       end
     end
 
