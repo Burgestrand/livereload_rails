@@ -1,6 +1,5 @@
 require "logger"
 require "livereload_rails/version"
-require "livereload_rails/matchers"
 require "livereload_rails/watcher"
 require "livereload_rails/stream"
 require "livereload_rails/web_socket"
@@ -12,7 +11,7 @@ module LivereloadRails
   class Error < StandardError; end
   class HijackingNotSupported < Error; end
 
-  @matchers = Matchers.new
+  @matchers = {}
   @logger = Logger.new($stderr)
 
   class << self
@@ -26,11 +25,11 @@ module LivereloadRails
 end
 
 LivereloadRails.configure do |config|
-  config.matchers.append :css do |file|
+  config.matchers[:css] = lambda do |file|
     "everything.css" if file["stylesheets"]
   end
 
-  config.matchers.append :js do |file|
+  config.matchers[:js] = lambda do |file|
     "everything.js" if file["javascripts"]
   end
 

@@ -6,23 +6,18 @@ module LivereloadRails
   class Middleware
     ASYNC_RESPONSE = [-1, {}, []]
 
-    def initialize(app, assets: , matchers: LivereloadRails.matchers)
+    def initialize(app, assets:, matchers: LivereloadRails.matchers)
       @app = app
       @clients = Set.new
       @clients.extend(MonitorMixin)
 
       assets.configure do |environment|
-        @watcher = Watcher.new(environment.paths) do |path, event|
-          if filename = matchers.translate(path)
-            client_path = "#{assets.prefix}/#{filename}"
+        @watcher = Watcher.new(environment.paths, matchers: matchers) do |file|
+          client_path = "#{assets.prefix}/#{file}"
+          clients = @clients.synchronize { @clients.dup }
 
-            clients = @clients.synchronize { @clients.dup }
-            clients.each { |client| client.reload(client_path) }
-
-            LivereloadRails.logger.debug "#{path} -> #{filename}: #{@clients.count} clients updated."
-          else
-            LivereloadRails.logger.debug "#{path} -> no match."
-          end
+          LivereloadRails.logger.debug "Reloading #{clients.size} clients with #{client_path}."
+          clients.each { |client| client.reload(client_path) }
         end
 
         @watcher_thread = Thread.new do
@@ -38,13 +33,13 @@ module LivereloadRails
           client = LivereloadRails::Client.new(ws)
 
           ws.on(:open) do
-            LivereloadRails.logger.debug "#{client} joined."
             @clients.synchronize { @clients.add(client) }
+            LivereloadRails.logger.debug "#{client} joined: #{@clients.size}."
           end
 
           ws.on(:close) do
-            LivereloadRails.logger.debug "#{client} left."
             @clients.synchronize { @clients.delete(client) }
+            LivereloadRails.logger.debug "#{client} left: #{@clients.size}."
           end
         end
 
