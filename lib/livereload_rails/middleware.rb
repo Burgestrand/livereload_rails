@@ -39,10 +39,12 @@ module LivereloadRails
           client = LivereloadRails::Client.new(ws)
 
           ws.on(:open) do
+            LivereloadRails.logger.debug "#{client} joined."
             @clients.synchronize { @clients.add(client) }
           end
 
           ws.on(:close) do
+            LivereloadRails.logger.debug "#{client} left."
             @clients.synchronize { @clients.delete(client) }
           end
         end
