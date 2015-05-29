@@ -1,7 +1,7 @@
 require "thread"
 require "nio"
 
-module Livereload
+module LivereloadRails
   # A non-blocking connection.
   class Stream
     READ_CHUNK = 1024 * 10

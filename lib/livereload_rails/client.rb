@@ -1,4 +1,4 @@
-module Livereload
+module LivereloadRails
   class Client
     FSM = {
       initial: {},
@@ -33,7 +33,7 @@ module Livereload
         protocols: [
           "http://livereload.com/protocols/official-7"
         ],
-        serverName: "Elabs' Livereload",
+        serverName: "Elabs' LivereloadRails",
       })
 
       @state = :idle

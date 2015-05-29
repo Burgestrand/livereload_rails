@@ -1,16 +1,16 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'livereload-rails/version'
+require 'livereload_rails/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "livereload-rails"
-  spec.version       = Livereload::VERSION
+  spec.name          = "livereload_rails"
+  spec.version       = LivereloadRails::VERSION
   spec.authors       = ["Kim Burgestrand", "Elabs"]
   spec.email         = ["kim@burgestrand.se", "dev@elabs.se"]
 
   spec.summary       = %q{Easy livereloading of assets for Rails.}
-  spec.homepage      = "https://github.com/Burgestrand/livereload-rails"
+  spec.homepage      = "https://github.com/Burgestrand/livereload_rails"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }

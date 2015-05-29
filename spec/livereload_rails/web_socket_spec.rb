@@ -1,5 +1,5 @@
-describe Livereload::WebSocket, timeout: 1 do
-  let(:klass) { Livereload::WebSocket }
+describe LivereloadRails::WebSocket, timeout: 1 do
+  let(:klass) { LivereloadRails::WebSocket }
 
   let(:channel) { UNIXSocket.pair }
   let(:remote) { channel[0] }
@@ -37,7 +37,7 @@ describe Livereload::WebSocket, timeout: 1 do
 
     it "raises an error if hijacking is not supported" do
       env["rack.hijack?"] = false
-      expect { klass.new(env, &fail) }.to raise_error(Livereload::HijackingNotSupported)
+      expect { klass.new(env, &fail) }.to raise_error(LivereloadRails::HijackingNotSupported)
     end
 
     it "raises an error if no block was given" do

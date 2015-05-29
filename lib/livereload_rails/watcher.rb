@@ -1,4 +1,4 @@
-module Livereload
+module LivereloadRails
   class Watcher
     def initialize(paths, &update)
       @watcher = FileWatcher.new(paths)

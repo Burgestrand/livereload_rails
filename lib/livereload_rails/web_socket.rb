@@ -5,7 +5,7 @@ require "nio"
 # TODO: Global flag could interfere with other code.
 ::WebSocket.should_raise = true
 
-module Livereload
+module LivereloadRails
   # Embodies a WebSocket connection as a separate thread.
   class WebSocket
     PING_TIMEOUT = 1
@@ -114,7 +114,7 @@ module Livereload
       raise @handshake.error unless @handshake.valid?
 
       frame_parser = ::WebSocket::Frame::Incoming::Server.new(version: @handshake.version)
-      @stream = Livereload::Stream.new(@io) do |input|
+      @stream = LivereloadRails::Stream.new(@io) do |input|
         handle_frames(frame_parser, input)
       end
       @stream.write(@handshake.to_s)

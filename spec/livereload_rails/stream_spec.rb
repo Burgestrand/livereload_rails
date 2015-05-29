@@ -1,6 +1,6 @@
 require "socket"
 
-describe Livereload::Stream, timeout: 1 do
+describe LivereloadRails::Stream, timeout: 1 do
   let(:server) { TCPServer.new("127.0.0.1", 0) }
   let(:local)  { TCPSocket.new("127.0.0.1", server.addr(true)[1]) }
   let(:remote) { server.accept }
@@ -27,7 +27,7 @@ describe Livereload::Stream, timeout: 1 do
     thread = Thread.new(local) do |io|
       received = []
 
-      stream = Livereload::Stream.new(io) do |data|
+      stream = LivereloadRails::Stream.new(io) do |data|
         received << data.dup
         stream.write(data.upcase)
       end
@@ -51,7 +51,7 @@ describe Livereload::Stream, timeout: 1 do
   end
 
   it "can initiate reading from an idle state" do
-    stream = Livereload::Stream.new(local, &append)
+    stream = LivereloadRails::Stream.new(local, &append)
     thread = threaded_wait(stream)
 
     remote.write "Wakeup!"
@@ -62,7 +62,7 @@ describe Livereload::Stream, timeout: 1 do
   end
 
   it "can initiate writing from an idle state" do
-    stream = Livereload::Stream.new(local, &fail)
+    stream = LivereloadRails::Stream.new(local, &fail)
     thread = threaded_wait(stream)
 
     stream.write "No longer idle."
@@ -72,7 +72,7 @@ describe Livereload::Stream, timeout: 1 do
 
   it "can read from the start if there is data in the pipe" do
     remote.write "Data in the pipes!"
-    stream = Livereload::Stream.new(local) { |data| received << data; stream.close }
+    stream = LivereloadRails::Stream.new(local) { |data| received << data; stream.close }
     stream.loop
 
     expect(received).to eq "Data in the pipes!"
@@ -81,7 +81,7 @@ describe Livereload::Stream, timeout: 1 do
   context "exits gracefully" do
     context "when IO is closed remotely" do
       specify "before looping" do
-        stream = Livereload::Stream.new(local, &fail)
+        stream = LivereloadRails::Stream.new(local, &fail)
         remote.close
         stream.loop
       end
@@ -92,7 +92,7 @@ describe Livereload::Stream, timeout: 1 do
         io = FakeIO.new(local, read_buffer: 8)
         io.on(:read_nonblock) { remote.close unless remote.closed? }
 
-        stream = Livereload::Stream.new(io, &append)
+        stream = LivereloadRails::Stream.new(io, &append)
         stream.loop
 
         expect(received).to eq "This is cool"
@@ -104,7 +104,7 @@ describe Livereload::Stream, timeout: 1 do
         io.on(:write_nonblock) { data << remote.readpartial(100) }
         io.on(:write_nonblock) { remote.close unless remote.closed? }
 
-        stream = Livereload::Stream.new(io, &fail)
+        stream = LivereloadRails::Stream.new(io, &fail)
         stream.write "This is cool."
         stream.loop
 
@@ -112,7 +112,7 @@ describe Livereload::Stream, timeout: 1 do
       end
 
       specify "after looping" do
-        stream = Livereload::Stream.new(local, &append)
+        stream = LivereloadRails::Stream.new(local, &append)
         thread = threaded_wait(stream)
 
         remote.close
@@ -122,7 +122,7 @@ describe Livereload::Stream, timeout: 1 do
 
     context "when IO is closed locally" do
       specify "before looping" do
-        stream = Livereload::Stream.new(local, &fail)
+        stream = LivereloadRails::Stream.new(local, &fail)
         local.close
         stream.loop
       end
@@ -133,7 +133,7 @@ describe Livereload::Stream, timeout: 1 do
         io = FakeIO.new(local, read_buffer: 8)
         io.on(:read_nonblock) { local.close unless local.closed? }
 
-        stream = Livereload::Stream.new(io, &append)
+        stream = LivereloadRails::Stream.new(io, &append)
         stream.loop
 
         expect(received).to eq "This is "
@@ -145,7 +145,7 @@ describe Livereload::Stream, timeout: 1 do
         io.on(:write_nonblock) { data << remote.readpartial(100) }
         io.on(:write_nonblock) { local.close unless local.closed? }
 
-        stream = Livereload::Stream.new(io, &fail)
+        stream = LivereloadRails::Stream.new(io, &fail)
         stream.write "This is cool."
         stream.loop
 
@@ -153,7 +153,7 @@ describe Livereload::Stream, timeout: 1 do
       end
 
       specify "after looping" do
-        stream = Livereload::Stream.new(local, &append)
+        stream = LivereloadRails::Stream.new(local, &append)
         thread = threaded_wait(stream)
 
         local.close
@@ -169,7 +169,7 @@ describe Livereload::Stream, timeout: 1 do
     specify "if reading crashes" do
       remote.write "This is cool."
 
-      stream = Livereload::Stream.new(local) { raise error }
+      stream = LivereloadRails::Stream.new(local) { raise error }
 
       expect { stream.loop(selector) }.to raise_error(error)
       expect(selector.registered?(local)).to eq(false)
@@ -178,7 +178,7 @@ describe Livereload::Stream, timeout: 1 do
     specify "if writing crashes" do
       expect(local).to receive(:write_nonblock).and_raise(error)
 
-      stream = Livereload::Stream.new(local) { |data| raise "data: #{data} received in error" }
+      stream = LivereloadRails::Stream.new(local) { |data| raise "data: #{data} received in error" }
       stream.write "Outgoing data."
 
       expect { stream.loop(selector) }.to raise_error(error)

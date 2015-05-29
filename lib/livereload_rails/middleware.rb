@@ -2,7 +2,7 @@ require "monitor"
 require "set"
 require "filewatcher"
 
-module Livereload
+module LivereloadRails
   class Middleware
     ASYNC_RESPONSE = [-1, {}, []]
 
@@ -28,8 +28,8 @@ module Livereload
 
     def call(env)
       if env["PATH_INFO"] == "/livereload"
-        websocket = Livereload::WebSocket.from_rack(env) do |ws|
-          client = Livereload::Client.new(ws)
+        websocket = LivereloadRails::WebSocket.from_rack(env) do |ws|
+          client = LivereloadRails::Client.new(ws)
 
           ws.on(:open) do
             @clients.synchronize { @clients.add(client) }

@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "livereload-rails"
+require "livereload_rails"
 require "timeout"
 
 require "support/fake_io"
