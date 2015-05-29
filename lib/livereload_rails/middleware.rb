@@ -16,7 +16,7 @@ module LivereloadRails
           if filename = matchers.translate(path)
             client_path = "#{assets.prefix}/#{filename}"
 
-            clients = @clients.synhronize { @clients.dup }
+            clients = @clients.synchronize { @clients.dup }
             clients.each { |client| client.reload(client_path) }
 
             LivereloadRails.logger.debug "#{path} -> #{filename}: #{@clients.count} clients updated."
