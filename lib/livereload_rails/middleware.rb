@@ -11,7 +11,6 @@ module LivereloadRails
       @clients = Set.new
       @clients.extend(MonitorMixin)
 
-      assets.digest = false
       assets.configure do |environment|
         @watcher = Watcher.new(environment.paths) do |path, event|
           if filename = matchers.translate(path)
