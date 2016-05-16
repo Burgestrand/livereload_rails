@@ -48,6 +48,11 @@ module LivereloadRails
         else
           @app.call(env)
         end
+      elsif env["PATH_INFO"] == "/livereload.js"
+        prefix = Rails.application.config.assets.prefix
+        file = Rails.application.assets.find_asset("livereload.js").digest_path
+        url = File.join(prefix, file)
+        [302, { "Location" => url }, []]
       else
         @app.call(env)
       end
